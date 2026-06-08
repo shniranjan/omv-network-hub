@@ -1,0 +1,65 @@
+version: "3.8"
+
+services:
+  # ── DNS: Pi-hole ──────────────────────────────────
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    hostname: pihole
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8080:80/tcp"
+    environment:
+      TZ: ${TZ}
+      WEBPASSWORD: ${PIHOLE_WEBPASSWORD}
+    volumes:
+      - ./data/pihole/etc-pihole:/etc/pihole
+      - ./data/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    networks:
+      - hub-net
+    restart: unless-stopped
+
+  # ── Forward Proxy: tinyproxy ─────────────────────
+  tinyproxy:
+    image: vimagick/tinyproxy:latest
+    container_name: tinyproxy
+    ports:
+      - "${PROXY_PORT}:8888"
+    volumes:
+      - ./config/tinyproxy/tinyproxy.conf:/etc/tinyproxy/tinyproxy.conf:ro
+    networks:
+      - hub-net
+    restart: unless-stopped
+
+  # ── SSH Tunnel to VPS ────────────────────────────
+  tunnel:
+    image: alpine:latest
+    container_name: ssh-tunnel
+    entrypoint: |
+      /bin/sh -c '
+        apk add --no-cache openssh autossh 2>/dev/null
+        mkdir -p /root/.ssh
+        cp /ssh/id_rsa /root/.ssh/ 2>/dev/null
+        chmod 600 /root/.ssh/id_rsa 2>/dev/null
+        echo "Tunnel: ${TUNNEL_LOCAL_HOST}:${TUNNEL_LOCAL_PORT} → ${VPS_HOST}:${TUNNEL_REMOTE_PORT}"
+        exec autossh -M 0 -N \
+          -o ServerAliveInterval=60 \
+          -o ExitOnForwardFailure=yes \
+          -o StrictHostKeyChecking=accept-new \
+          -o UserKnownHostsFile=/dev/null \
+          -R ${TUNNEL_REMOTE_PORT}:${TUNNEL_LOCAL_HOST}:${TUNNEL_LOCAL_PORT} \
+          ${VPS_USER}@${VPS_HOST} -p ${VPS_SSH_PORT}
+      '
+    volumes:
+      - ./config/ssh:/ssh:ro
+    networks:
+      - hub-net
+    restart: unless-stopped
+
+networks:
+  hub-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${DOCKER_SUBNET}
