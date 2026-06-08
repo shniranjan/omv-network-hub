@@ -49,7 +49,7 @@ The tunnel container maintains an encrypted connection to your VPS. On the VPS n
 
 ```nginx
 location / {
-    proxy_pass http://localhost:8123;
+    proxy_pass http://localhost:38123;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -57,7 +57,7 @@ location / {
 }
 ```
 
-Replace `localhost:8123` with the `TUNNEL_REMOTE_PORT` from your `.env`.
+Replace `localhost:38123` with the `TUNNEL_REMOTE_PORT` from your `.env`.
 
 ## Verification
 
@@ -72,7 +72,7 @@ nslookup google.com OMV_IP
 curl -x http://OMV_IP:8888 http://example.com
 
 # Tunnel alive?
-ssh user@vps "curl -s localhost:8123" | head -5
+ssh user@vps "curl -s localhost:38123" | head -5
 ```
 
 ## Files
