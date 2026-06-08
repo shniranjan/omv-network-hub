@@ -1,4 +1,5 @@
 .env
 config/ssh/id_rsa
 config/ssh/id_rsa.pub
+.github-deploy-key*
 data/
