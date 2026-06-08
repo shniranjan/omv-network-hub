@@ -16,7 +16,7 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USER/omv-network-hub.git
+git clone https://github.com/shniranjan/omv-network-hub.git
 cd omv-network-hub
 
 # Configure
